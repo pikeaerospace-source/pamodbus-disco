@@ -25,12 +25,12 @@ extern "C" {
 #define PA_DISCO_ERR_UNKNOWN  -1
 
 /* ---------------------------------------------------------------------------
- * Serial number helpers (6-byte serial number in 3 uint16_t's)
+ * Serial number helpers (12-byte serial number in 6 uint16_t's)
  * ------------------------------------------------------------------------- */
 
-/** Serial number type (6 bytes). */
+/** Serial number type (12 bytes). */
 typedef struct {
-    uint16_t hword[3];
+    uint16_t hword[6];
 } pa_disco_serialno_t;
 
 /* The consumer may typedef their own serialno_t that is ABI-compatible.

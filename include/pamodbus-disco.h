@@ -50,7 +50,7 @@ typedef struct pa_disco_list pa_disco_list_t;
 #define PA_DISCO_ADDR              0xFF
 
 /** Number of registers in the discovery register file. */
-#define PA_DISCO_REG_COUNT         7
+#define PA_DISCO_REG_COUNT         10
 
 /** Starting register address for discovery register file. */
 #define PA_DISCO_REG_START         23
@@ -297,7 +297,7 @@ void pa_disco_slave_set_window(pa_disco_slave_dev_t *ctx,
 /**
  * Set the self serial number (unique identifier).
  * @param ctx       Slave discovery context.
- * @param serialno  Pointer to 6-byte serial number (3 uint16_t values).
+ * @param serialno  Pointer to 12-byte serial number (6 uint16_t values).
  */
 void pa_disco_slave_set_serialno(pa_disco_slave_dev_t *ctx,
                                  const uint16_t *serialno);
@@ -426,7 +426,7 @@ void pa_disco_register_map_put_float32(pa_disco_register_map_t *map,
 /**
  * Create a new slave record.
  * @param slave_id  The slave ID.
- * @param serialno  Pointer to serial number (3 uint16_t values).
+ * @param serialno  Pointer to serial number (6 uint16_t values).
  * @param arg       Application data pointer (may be NULL).
  * @return Pointer to new slave record, or NULL on allocation failure.
  */
@@ -488,7 +488,7 @@ pa_disco_slave_t *pa_disco_list_at(const pa_disco_list_t *list, int index);
 /**
  * Find a slave by serial number.
  * @param list      Slave list.
- * @param serialno  Pointer to serial number (3 uint16_t values).
+ * @param serialno  Pointer to serial number (6 uint16_t values).
  * @return Index of the matching slave, or -1 if not found.
  */
 int pa_disco_list_find_serialno(const pa_disco_list_t *list,
@@ -514,7 +514,7 @@ uint8_t pa_disco_slave_get_id(const pa_disco_slave_t *slave);
 /**
  * Get the serial number of a slave record.
  * @param slave  Slave record.
- * @return Pointer to serial number (3 uint16_t values).
+ * @return Pointer to serial number (6 uint16_t values).
  */
 const uint16_t *pa_disco_slave_get_serialno(const pa_disco_slave_t *slave);
 

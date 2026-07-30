@@ -52,6 +52,9 @@ void pa_disco_slave_set_serialno(pa_disco_slave_dev_t *ctx,
     ctx->self_serialno.hword[0] = serialno[0];
     ctx->self_serialno.hword[1] = serialno[1];
     ctx->self_serialno.hword[2] = serialno[2];
+    ctx->self_serialno.hword[3] = serialno[3];
+    ctx->self_serialno.hword[4] = serialno[4];
+    ctx->self_serialno.hword[5] = serialno[5];
 }
 
 /* ---------------------------------------------------------------------------
@@ -133,11 +136,14 @@ int pa_disco_slave_write_cb(void *arg, int reg_index, uint16_t nregs)
             const uint16_t *reg_data = pa_modbus_slave_reg_data(pam);
             uint8_t req_slave_id = (uint8_t)(reg_data[0] & 0xFF);
 
-            /* Serial number is in reg_data[1..3] (3 uint16_t = 6 bytes) */
+            /* Serial number is in reg_data[1..6] (6 uint16_t = 12 bytes) */
             pa_disco_serialno_t other_serialno;
             other_serialno.hword[0] = reg_data[1];
             other_serialno.hword[1] = reg_data[2];
             other_serialno.hword[2] = reg_data[3];
+            other_serialno.hword[3] = reg_data[4];
+            other_serialno.hword[4] = reg_data[5];
+            other_serialno.hword[5] = reg_data[6];
 
             /* Determine if the ID needs to be reset or assigned:
              * - If requested serial number is zero (reset)
@@ -146,11 +152,17 @@ int pa_disco_slave_write_cb(void *arg, int reg_index, uint16_t nregs)
             bool serial_no_is_zero =
                 (other_serialno.hword[0] == 0 &&
                  other_serialno.hword[1] == 0 &&
-                 other_serialno.hword[2] == 0);
+                 other_serialno.hword[2] == 0 &&
+                 other_serialno.hword[3] == 0 &&
+                 other_serialno.hword[4] == 0 &&
+                 other_serialno.hword[5] == 0);
             bool serial_no_is_me =
                 (other_serialno.hword[0] == ctx->self_serialno.hword[0] &&
                  other_serialno.hword[1] == ctx->self_serialno.hword[1] &&
-                 other_serialno.hword[2] == ctx->self_serialno.hword[2]);
+                 other_serialno.hword[2] == ctx->self_serialno.hword[2] &&
+                 other_serialno.hword[3] == ctx->self_serialno.hword[3] &&
+                 other_serialno.hword[4] == ctx->self_serialno.hword[4] &&
+                 other_serialno.hword[5] == ctx->self_serialno.hword[5]);
 
             if (serial_no_is_me || serial_no_is_zero) {
                 /* Set the new modbus slave ID */

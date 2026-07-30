@@ -92,8 +92,8 @@ static bool receive_response(pa_disco_master_t *ctx)
         if (i == 0) {
             ctx->rsp_slave_id = (uint8_t)(val & 0xFF);
             ctx->rsp_valid = 1;
-        } else if (i >= 1 && i <= 3) {
-            /* Serial number is 6 bytes in 3 registers */
+        } else if (i >= 1 && i <= 6) {
+            /* Serial number is 12 bytes in 6 registers */
             ctx->rsp_serialno.hword[i - 1] = val;
         }
         reg_count++;
@@ -108,17 +108,20 @@ static bool assign_slave(pa_disco_master_t *ctx, uint8_t slave_id)
     int rc;
 
     /* Build a Write Multiple Registers request to PA_DISCO_ADDR (0xFF)
-     * Write 7 registers starting at PA_DISCO_REG_START (23):
+     * Write PA_DISCO_REG_COUNT registers starting at PA_DISCO_REG_START (23):
      *   reg[0] = slave_id (low byte)
-     *   reg[1..3] = serial number (6 bytes in 3 registers)
-     *   reg[4..6] = padding (0)
+     *   reg[1..6] = serial number (12 bytes in 6 registers)
+     *   reg[7..9] = padding (0)
      */
-    uint16_t regs[7] = {0};
+    uint16_t regs[PA_DISCO_REG_COUNT] = {0};
     regs[0] = (uint16_t)slave_id;
     regs[1] = ctx->rsp_serialno.hword[0];
     regs[2] = ctx->rsp_serialno.hword[1];
     regs[3] = ctx->rsp_serialno.hword[2];
-    /* regs[4..6] remain 0 */
+    regs[4] = ctx->rsp_serialno.hword[3];
+    regs[5] = ctx->rsp_serialno.hword[4];
+    regs[6] = ctx->rsp_serialno.hword[5];
+    /* regs[7..9] remain 0 */
 
     /* Flush before sending */
     if (ctx->flush_cb)
@@ -126,7 +129,7 @@ static bool assign_slave(pa_disco_master_t *ctx, uint8_t slave_id)
 
     pa_modbus_set_slave(pam, PA_DISCO_ADDR);
     rc = pa_modbus_build_write_multiple_registers(pam, PA_DISCO_REG_START,
-                                                  regs, 7);
+                                                  regs, PA_DISCO_REG_COUNT);
     if (rc < 0) return false;
 
     rc = pa_modbus_send(pam);
@@ -139,16 +142,16 @@ static bool reset_slaves(pa_disco_master_t *ctx)
     int rc;
 
     /* Build a Write Multiple Registers request to PA_DISCO_ADDR (0xFF)
-     * Write 7 registers with slave_id=0 and zero serial number
+     * Write PA_DISCO_REG_COUNT registers with slave_id=0 and zero serial number
      */
-    uint16_t regs[7] = {0};
+    uint16_t regs[PA_DISCO_REG_COUNT] = {0};
 
     if (ctx->flush_cb)
         ctx->flush_cb(ctx->userdata);
 
     pa_modbus_set_slave(pam, PA_DISCO_ADDR);
     rc = pa_modbus_build_write_multiple_registers(pam, PA_DISCO_REG_START,
-                                                  regs, 7);
+                                                  regs, PA_DISCO_REG_COUNT);
     if (rc < 0) return false;
 
     rc = pa_modbus_send(pam);

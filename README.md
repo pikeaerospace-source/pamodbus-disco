@@ -34,9 +34,9 @@ Like pamodbus, this library is **pure protocol** — it handles the discovery st
 
 The protocol uses standard MODBUS function codes over the broadcast address `0xFF`:
 
-1. **Reset** — Master broadcasts a write of 7 registers at address 23 with `slave_id=0` and zero serial number. All slaves reset their assigned ID to 0 (unassigned).
-2. **Query** — Master broadcasts a read of 7 registers at address 23. Unassigned slaves (ID=0) respond after a random delay.
-3. **Assign** — Master sends a write of 7 registers at address 23 with the new slave ID and the responding slave's serial number. The matching slave adopts the new ID.
+1. **Reset** — Master broadcasts a write of 10 registers at address 23 with `slave_id=0` and zero serial number. All slaves reset their assigned ID to 0 (unassigned).
+2. **Query** — Master broadcasts a read of 10 registers at address 23. Unassigned slaves (ID=0) respond after a random delay.
+3. **Assign** — Master sends a write of 10 registers at address 23 with the new slave ID and the responding slave's serial number. The matching slave adopts the new ID.
 4. **Verify** — Master reads register 0 from the newly assigned slave to confirm the ID is active.
 5. **Repeat** — Steps 2-4 repeat until no more responses are received within the window.
 
@@ -45,8 +45,8 @@ The protocol uses standard MODBUS function codes over the broadcast address `0xF
 | Offset | Field | Size |
 |--------|-------|------|
 | 0 | Slave ID (assigned by master) | uint16 |
-| 1-3 | Serial Number (6 bytes) | 3 × uint16 |
-| 4-6 | Padding (reserved) | 3 × uint16 |
+| 1-6 | Serial Number (12 bytes) | 6 × uint16 |
+| 7-9 | Padding (reserved) | 3 × uint16 |
 
 ## Types
 
@@ -249,11 +249,14 @@ static void unlock(void *userdata) {
 static void on_slave_discovered(pa_disco_list_t *list,
                                  pa_disco_slave_t *slave, void *userdata) {
     if (slave) {
-        printf("Discovered: ID=%d S/N=%04X%04X%04X\n",
+        printf("Discovered: ID=%d S/N=%04X%04X%04X%04X%04X%04X\n",
                pa_disco_slave_get_id(slave),
                pa_disco_slave_get_serialno(slave)[0],
                pa_disco_slave_get_serialno(slave)[1],
-               pa_disco_slave_get_serialno(slave)[2]);
+               pa_disco_slave_get_serialno(slave)[2],
+               pa_disco_slave_get_serialno(slave)[3],
+               pa_disco_slave_get_serialno(slave)[4],
+               pa_disco_slave_get_serialno(slave)[5]);
     } else {
         printf("Discovery cycle complete — %d slaves found\n",
                pa_disco_list_count(list));
@@ -340,7 +343,7 @@ static int req_cb(void *arg) {
 }
 
 void slave_setup(void) {
-    uint16_t serialno[3] = {0x1234, 0x5678, 0x9ABC};
+    uint16_t serialno[6] = {0x1234, 0x5678, 0x9ABC, 0xDEF0, 0x1122, 0x3344};
 
     /* Initialize pamodbus */
     pa_modbus_t *pam = &map.pam;

@@ -21,6 +21,9 @@ pa_disco_slave_t *pa_disco_slave_new(uint8_t slave_id,
         slave->serialno.hword[0] = serialno[0];
         slave->serialno.hword[1] = serialno[1];
         slave->serialno.hword[2] = serialno[2];
+        slave->serialno.hword[3] = serialno[3];
+        slave->serialno.hword[4] = serialno[4];
+        slave->serialno.hword[5] = serialno[5];
         slave->arg = arg;
     }
     return slave;
@@ -111,7 +114,10 @@ int pa_disco_list_find_serialno(const pa_disco_list_t *list,
         const pa_disco_slave_t *s = list->slave[i];
         if (s->serialno.hword[0] == serialno[0] &&
             s->serialno.hword[1] == serialno[1] &&
-            s->serialno.hword[2] == serialno[2]) {
+            s->serialno.hword[2] == serialno[2] &&
+            s->serialno.hword[3] == serialno[3] &&
+            s->serialno.hword[4] == serialno[4] &&
+            s->serialno.hword[5] == serialno[5]) {
             return i;
         }
     }
