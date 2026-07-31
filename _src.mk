@@ -25,3 +25,6 @@ SRCS_CC += $(SRC_PAMODBUS_DISCO)/src/pa_disco_master.c
 SRCS_CC += $(SRC_PAMODBUS_DISCO)/src/pa_disco_slave.c
 SRCS_CC += $(SRC_PAMODBUS_DISCO)/src/pa_disco_list.c
 SRCS_CC += $(SRC_PAMODBUS_DISCO)/src/pa_disco_register_map.c
+
+# modbus-disco compatibility layer
+SRCS_CC += $(SRC_PAMODBUS_DISCO)/src/modbus-disco-list-compat.c
