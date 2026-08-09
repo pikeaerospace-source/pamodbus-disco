@@ -4,8 +4,8 @@
  */
 
 #include "pamodbus-disco-internal.h"
-#include <stdlib.h>  /* malloc, free, realloc */
-#include <string.h>  /* memset, memmove */
+#include <briscits-heap.h>  /* malloc, free, realloc */
+#include <briscits-string.h>  /* memset, memmove */
 
 /* ---------------------------------------------------------------------------
  * Slave record
@@ -64,8 +64,8 @@ void pa_disco_list_clear(pa_disco_list_t *list)
         for (int i = 0; i < list->count; i++) {
             pa_disco_slave_delete(list->slave[i]);
         }
-        free(list->slave);
-        memset(list, 0, sizeof(*list));
+        brisc_string_free(list->slave);
+        brisc_string_memset(list, 0, sizeof(*list));
     }
 }
 
@@ -80,7 +80,7 @@ bool pa_disco_list_insert(pa_disco_list_t *list, pa_disco_slave_t *slave,
     if (index < 0 || index > list->count)
         return false;
 
-    pa_disco_slave_t **new_slave = (pa_disco_slave_t **)realloc(
+    pa_disco_slave_t **new_slave = (pa_disco_slave_t **)brisc_heap_realloc(
         list->slave, sizeof(pa_disco_slave_t *) * (size_t)(list->count + 1));
     if (!new_slave)
         return false;
@@ -88,8 +88,8 @@ bool pa_disco_list_insert(pa_disco_list_t *list, pa_disco_slave_t *slave,
     list->slave = new_slave;
     list->count++;
     if (index < list->count - 1) {
-        memmove(&list->slave[index + 1], &list->slave[index],
-                sizeof(pa_disco_slave_t *) * (size_t)(list->count - 1 - index));
+        brisc_string_memmove(&list->slave[index + 1], &list->slave[index],
+                             sizeof(pa_disco_slave_t *) * (size_t)(list->count - 1 - index));
     }
     list->slave[index] = slave;
     return true;

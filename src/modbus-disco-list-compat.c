@@ -8,8 +8,8 @@
  */
 
 #include <modbus-disco-list.h>
-#include <stdlib.h>  /* malloc, free, realloc */
-#include <string.h>  /* memset, memmove */
+#include <briscits-heap.h>  /* malloc, free, realloc */
+#include <briscits-string.h>  /* memset, memmove */
 
 /* ---------------------------------------------------------------------------
  * Slave record management
@@ -19,13 +19,13 @@ modbus_slave_t* modbus_disco_slave_new(uint8_t slave_id,
                                        serialno_t* serialno,
                                        void* arg)
 {
-    modbus_slave_t* slave = (modbus_slave_t*)malloc(sizeof(modbus_slave_t));
+    modbus_slave_t* slave = (modbus_slave_t*)brisc_heap_malloc(sizeof(modbus_slave_t));
     if (slave) {
         slave->slave_id = slave_id;
         if (serialno) {
             serialno_copy(&slave->serialno, serialno);
         } else {
-            memset(&slave->serialno, 0, sizeof(serialno_t));
+            brisc_string_memset(&slave->serialno, 0, sizeof(serialno_t));
         }
         slave->arg = arg;
     }
@@ -34,7 +34,7 @@ modbus_slave_t* modbus_disco_slave_new(uint8_t slave_id,
 
 void modbus_disco_slave_delete(modbus_slave_t* slave)
 {
-    free(slave);
+    brisc_heap_free(slave);
 }
 
 /* ---------------------------------------------------------------------------
@@ -43,7 +43,7 @@ void modbus_disco_slave_delete(modbus_slave_t* slave)
 
 void modbus_disco_list_new(modbus_disco_list_t* list)
 {
-    memset(list, 0, sizeof(modbus_disco_list_t));
+    brisc_string_memset(list, 0, sizeof(modbus_disco_list_t));
 }
 
 void modbus_disco_list_delete(modbus_disco_list_t* list)
@@ -55,8 +55,8 @@ void modbus_disco_list_delete(modbus_disco_list_t* list)
                 modbus_disco_slave_delete(slave);
             }
         }
-        free(list->slave);
-        memset(list, 0, sizeof(modbus_disco_list_t));
+        brisc_heap_free(list->slave);
+        brisc_string_memset(list, 0, sizeof(modbus_disco_list_t));
     }
 }
 
@@ -71,7 +71,7 @@ bool modbus_disco_list_insert(modbus_disco_list_t* list,
     if (index < 0 || index > list->count)
         return false;
 
-    modbus_slave_t** new_slave = (modbus_slave_t**)realloc(
+    modbus_slave_t** new_slave = (modbus_slave_t**)brisc_heap_realloc(
         list->slave, sizeof(modbus_slave_t*) * (size_t)(list->count + 1));
     if (!new_slave)
         return false;
@@ -79,8 +79,8 @@ bool modbus_disco_list_insert(modbus_disco_list_t* list,
     list->slave = new_slave;
     list->count++;
     if (index < list->count - 1) {
-        memmove(&list->slave[index + 1], &list->slave[index],
-                sizeof(modbus_slave_t*) * (size_t)(list->count - 1 - index));
+        brisc_string_memmove(&list->slave[index + 1], &list->slave[index],
+                             sizeof(modbus_slave_t*) * (size_t)(list->count - 1 - index));
     }
     list->slave[index] = slave;
     return true;
