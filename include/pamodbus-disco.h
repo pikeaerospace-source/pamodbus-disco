@@ -61,8 +61,13 @@ typedef struct pa_disco_list pa_disco_list_t;
 /** Number of verify registers to read. */
 #define PA_DISCO_VERIFY_NREG       1
 
-/** Default number of holding registers in the register map. */
-#define PA_DISCO_HOLDING_NREGS     32
+/** Number of holding registers in the register map.
+ *
+ * Must cover reg 0 (verify read, PA_DISCO_VERIFY_REG) and the full discovery
+ * block (PA_DISCO_REG_START .. PA_DISCO_REG_START + PA_DISCO_REG_COUNT = 23..32)
+ * within a single contiguous window, i.e. >= PA_DISCO_REG_START +
+ * PA_DISCO_REG_COUNT (33). 32 was too small to serve both. */
+#define PA_DISCO_HOLDING_NREGS     64
 
 /* ---------------------------------------------------------------------------
  * Enums
