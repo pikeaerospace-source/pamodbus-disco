@@ -81,6 +81,8 @@ struct pa_disco_master {
     int               repeat;           /**< Broadcast repeat counter. */
     int               reset_repeat;     /**< Reset repeat counter. */
     int               verify_repeat;    /**< Verify repeat counter. */
+    bool              verify_sent;      /**< Verify read request is outstanding. */
+    uint32_t          verify_start;     /**< Ticks when the verify read was sent. */
     uint32_t          refresh_start;    /**< Ticks at start of refresh period. */
     uint32_t          wait_start;       /**< Ticks at start of wait period. */
     uint32_t          wait_reset_start; /**< Ticks at start of reset wait. */

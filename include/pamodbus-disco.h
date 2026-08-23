@@ -69,6 +69,12 @@ typedef struct pa_disco_list pa_disco_list_t;
  * PA_DISCO_REG_COUNT (33). 32 was too small to serve both. */
 #define PA_DISCO_HOLDING_NREGS     64
 
+/** Verify read response timeout (ms). The master sends the verify read and
+ * then polls (non-blocking) for the response across pa_disco_master_service()
+ * calls; this is how long it waits before a verification is assumed to have
+ * failed and the attempt is retried. */
+#define PA_DISCO_VERIFY_TIMEOUT_MS 100
+
 /* ---------------------------------------------------------------------------
  * Enums
  * ------------------------------------------------------------------------- */

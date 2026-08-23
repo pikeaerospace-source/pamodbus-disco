@@ -158,7 +158,10 @@ static bool reset_slaves(pa_disco_master_t *ctx)
     return (rc == PA_OK);
 }
 
-static bool verify_slave(pa_disco_master_t *ctx, uint8_t slave_id)
+/* Send the verify read request to an assigned slave. The response is NOT
+ * consumed here: the verify state polls for it across service() calls, so a
+ * real-time (non-blocking) transport has time to return it. */
+static bool verify_slave_send(pa_disco_master_t *ctx, uint8_t slave_id)
 {
     pa_modbus_t *pam = ctx->pam;
     int rc;
@@ -173,9 +176,6 @@ static bool verify_slave(pa_disco_master_t *ctx, uint8_t slave_id)
     if (rc < 0) return false;
 
     rc = pa_modbus_send(pam);
-    if (rc != PA_OK) return false;
-
-    rc = pa_modbus_recv(pam);
     return (rc == PA_OK);
 }
 
@@ -397,22 +397,46 @@ static void do_state_wait(pa_disco_master_t *ctx)
 
 static void do_state_verify(pa_disco_master_t *ctx)
 {
-    if (--ctx->verify_repeat >= 0) {
-        bool verified = verify_slave(ctx, ctx->slave_id);
-
-        if (verified) {
-            /* Update the slave list */
-            pa_disco_slave_t *slave = update_slave_list(ctx);
-
-            /* Notify application of the new slave */
-            if (slave && ctx->notify_cb) {
-                ctx->notify_cb(&ctx->list, slave, ctx->userdata);
+    /* Phase A - send the verify read (once per attempt), then return so the
+     * response can arrive over a real-time, non-blocking transport. */
+    if (!ctx->verify_sent) {
+        if (!verify_slave_send(ctx, ctx->slave_id)) {
+            /* A hard send failure counts as a failed attempt. */
+            if (--ctx->verify_repeat < 0) {
+                ctx->state = PA_DISCO_STATE_REPEAT;
             }
-
-            ctx->verify_repeat = 0;  /* Success, skip remaining retries */
+            return;
         }
-    } else {
-        ctx->state = PA_DISCO_STATE_REPEAT;
+        ctx->verify_sent = true;
+        ctx->verify_start = ctx->get_ticks_cb
+            ? ctx->get_ticks_cb(ctx->userdata) : 0;
+        return;
+    }
+
+    /* Phase B - a verify read is outstanding: poll (non-blocking) across
+     * service() calls until the response arrives. */
+    if (pa_modbus_recv(ctx->pam) == PA_OK) {
+        /* Update the slave list and notify on success. */
+        pa_disco_slave_t *slave = update_slave_list(ctx);
+        if (slave && ctx->notify_cb) {
+            ctx->notify_cb(&ctx->list, slave, ctx->userdata);
+        }
+        ctx->verify_sent = false;
+        ctx->verify_repeat = 0;          /* success, skip remaining retries */
+        ctx->state = PA_DISCO_STATE_REPEAT;  /* allow finding more slaves */
+        return;
+    }
+
+    /* Only a real timeout counts as a failed attempt; a transient PA_WAIT
+     * (partial/no data yet) just keeps polling. */
+    if (ctx->get_ticks_cb) {
+        uint32_t now = ctx->get_ticks_cb(ctx->userdata);
+        if (now - ctx->verify_start >= PA_DISCO_VERIFY_TIMEOUT_MS) {
+            ctx->verify_sent = false;
+            if (--ctx->verify_repeat < 0) {
+                ctx->state = PA_DISCO_STATE_REPEAT;
+            }
+        }
     }
 }
 
